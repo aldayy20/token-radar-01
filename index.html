@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Launch Radar — pre-token protocols ranked by implied launch value</title>
+<meta name="description" content="Token Launch Radar: every pre-token protocol DefiLlama tracks, ranked by what its launch would be worth. Implied FDV from traded comparables, launch odds, and a farm plan for each protocol.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="radar-dot" aria-hidden="true"></span>
+    <div>
+      <h1>TOKEN LAUNCH RADAR</h1>
+      <p class="tagline">Pre-token protocols, ranked by what a launch would be worth</p>
+    </div>
+  </div>
+  <div class="top-meta">
+    <span id="stat-rows" class="pill">— protocols</span>
+    <span id="stat-fdv" class="pill">— implied FDV</span>
+    <span id="stat-ev" class="pill">— farmer EV</span>
+    <span class="pill">make.fun · token-radar-01</span>
+  </div>
+</header>
+
+<main>
+  <noscript><p class="notice"><strong>JavaScript is required.</strong> This dashboard renders its board from <code>data.js</code> in your browser; enable JavaScript and reload.</p></noscript>
+  <section class="notice" id="provenance">
+    <strong>Data provenance.</strong>
+    <span id="provenance-text">Loading…</span>
+    Figures come from the sealed DefiLlama snapshot (14 Nov 2026) — see <a href="#how">How it works</a>.
+  </section>
+
+  <section class="charts" aria-label="Overview charts">
+    <div class="card">
+      <h2>Top 10 by radar score</h2>
+      <div id="chart-top10" class="chart" role="img" aria-label="Top 10 protocols by radar score"></div>
+    </div>
+    <div class="card">
+      <h2>Category multiples <span class="hint">median FDV / TVL of traded peers</span></h2>
+      <div id="chart-multiples" class="chart" role="img" aria-label="Median FDV to TVL multiple by category"></div>
+    </div>
+    <div class="card">
+      <h2>TVL vs implied FDV <span class="hint">log scale · bubble = launch odds</span></h2>
+      <div id="chart-scatter" class="chart" role="img" aria-label="Scatter of TVL versus implied FDV"></div>
+    </div>
+  </section>
+
+  <section class="controls" aria-label="Filters">
+    <input id="q" type="search" placeholder="Search a protocol…" aria-label="Search protocols" autocomplete="off">
+    <select id="cat" aria-label="Filter by category"><option value="">All categories</option></select>
+    <select id="chain" aria-label="Filter by chain"><option value="">All chains</option></select>
+    <select id="sort" aria-label="Sort board">
+      <option value="fdv">Sort: implied FDV</option>
+      <option value="radar">Sort: radar score</option>
+      <option value="tvl">Sort: TVL</option>
+      <option value="growth">Sort: 7d growth</option>
+      <option value="ev">Sort: farmer EV</option>
+      <option value="odds">Sort: launch odds</option>
+    </select>
+    <label class="check"><input id="points-only" type="checkbox"> Points program only</label>
+    <label class="check"><input id="prime-only" type="checkbox"> PRIME only</label>
+    <span id="count" class="count" aria-live="polite"></span>
+    <button id="reset" type="button">Reset</button>
+  </section>
+
+  <section class="board-wrap">
+    <table class="board" id="board">
+      <thead>
+        <tr>
+          <th>#</th><th>Protocol</th><th>Category</th><th>Chains</th>
+          <th class="num">TVL</th><th class="num">7d</th>
+          <th class="num">Implied FDV</th><th class="num">Launch odds</th>
+          <th>Radar</th><th class="num">Farmer EV</th><th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody id="board-body"></tbody>
+    </table>
+    <p id="empty" class="empty" hidden>No protocol matches these filters. <button id="empty-reset" type="button">Clear filters</button></p>
+  </section>
+
+  <section class="detail" id="detail" hidden aria-label="Protocol detail">
+    <div class="detail-head">
+      <div>
+        <h2 id="d-name">—</h2>
+        <p id="d-sub" class="muted">—</p>
+      </div>
+      <button id="d-close" type="button" aria-label="Close detail">✕ Close</button>
+    </div>
+    <div class="metrics" id="d-metrics"></div>
+    <div class="detail-cols">
+      <div>
+        <h3>How the value is priced</h3>
+        <div id="d-math" class="math"></div>
+        <h3>What could go wrong</h3>
+        <ul id="d-risks" class="risks"></ul>
+      </div>
+      <div>
+        <h3>Farm plan <span class="hint" id="d-farm-cost"></span></h3>
+        <ol id="d-farm" class="farm"></ol>
+        <p class="muted small">Costs are rough estimates (gas + minimum position). No token is promised — farm only what you can afford to lock. Verify the points program on the protocol's own site before you start.</p>
+        <p class="muted small" id="d-defillama">—</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="how" id="how">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>Watchlist.</strong> Every protocol DefiLlama tracks is screened: out go any protocol that already records a token, and any wrapped or staked product of something that trades (LSTs / LRTs such as stETH, eETH, ezETH, LBTC). Launchpads and trading bots have no TVL and are out of scope. What is left is the pre-token board.</li>
+      <li><strong>Peer multiple.</strong> For each category, the median FDV/TVL of its traded comparables (winsorised to 0.2–15× so outliers cannot dominate), capped at 5× the market-wide median. A category with fewer than 3 comps falls back to the global median.</li>
+      <li><strong>Implied FDV</strong> = TVL × category multiple × (1 + 0.25 × 7-day growth, clamped) × maturity factor (0.6–1.0 by age). The multiple already prices size, so TVL enters linearly — no hidden exponent. Growth is the snapshot's <code>change_7d</code>; age is months from <code>listed_at</code> to the snapshot date.</li>
+      <li><strong>Launch odds</strong> are a logistic prior on age, points program, venture funding and momentum. A prior, not a prediction.</li>
+      <li><strong>Radar score (0–100)</strong> = 40% log implied FDV + 25% growth + 20% launch odds + 15% farmability (points program, multi-chain, low cost). Verdicts: PRIME ≥ 45, WATCH 30–44, LONG SHOT &lt; 30 — bands set on this snapshot's score distribution (top score 50). <strong>Farmer EV</strong> = implied FDV × launch odds × 5% (the assumed share of FDV that reaches farmers).</li>
+      <li><strong>Farm plan.</strong> Each row gets concrete steps for its category and chain, with rough costs. Regenerate everything with <code>node main.ts</code> — the board, the dossier and this page all come from the same computation.</li>
+    </ol>
+    <p class="muted small">Built for the make.fun bounty “Build the best token launch radar” (token-radar-01, $1,325 in USDC on Solana). Source and methodology: github.com/aldayy20/token-radar-01. Not financial advice.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Token Launch Radar · <span id="foot-meta">—</span></p>
+  <p class="muted small">Entered on make.fun · AI agents build software for cash rewards</p>
+</footer>
+
+<script src="../data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
