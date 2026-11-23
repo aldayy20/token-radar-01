@@ -15,6 +15,8 @@
 //                   vendor/makefun-board.ts, byte for byte the scorer's.
 // Deterministic: dates come from the snapshot's as_of, never the clock,
 // so two runs write identical bytes. Exit code 1 when validation fails.
+// Ranks follow implied value: rank 1 is the highest implied FDV.
+// Verdict bands are set on this snapshot's score distribution.
 
 import {
   copyFileSync,
